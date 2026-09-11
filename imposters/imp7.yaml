@@ -1,0 +1,99 @@
+imposter:
+  name: WorkflowsPlayground
+  description: End-to-end examples for workflows, triggers, forwards and matching
+  type: HTTP
+
+predicates:
+  # 1) Basic forward proxy – copies method/headers/query/body, small header override
+  - predicate:
+      method: GET
+      path: /wf/forward-basic/$id
+      workflows:
+        - type: forward
+          endpoint: http://example-forward.local/users/$id
+          headers:
+            X-From-Mockplant: "true"
+    responses:
+      - response:
+          code: 200
+          content: "Basic forward fallback for user $id"
+          content_type: text/plain
+
+  # 2) Forward with explicit overrides for headers/query/body
+  - predicate:
+      method: POST
+      path: /wf/forward-override/$resource
+      workflows:
+        - type: forward
+          endpoint: http://example-forward.local/resources/$resource
+          method: POST
+          headers:
+            X-Override: "1"
+          query:
+            debug: "true"
+          body:
+            overridden: true
+    responses:
+      - response:
+          code: 200
+          content: "Forward override fallback for $resource"
+          content_type: text/plain
+
+  # 3) Trigger-only – multiple side-effect calls, local stubbed response
+  - predicate:
+      method: POST
+      path: /wf/trigger-only/$eventId
+      workflows:
+        - type: trigger
+          endpoint: http://audit.example.local/events
+          method: POST
+          headers:
+            X-Event-Type: "wf_trigger_only"
+          body:
+            eventId: $eventId
+            source: mockplant
+        - type: trigger
+          endpoint: http://webhook.site/example-trigger-only
+          method: POST
+    responses:
+      - response:
+          code: 200
+          content: "Trigger-only workflow executed for event $eventId"
+          content_type: text/plain
+
+  # 4) Trigger + forward – audit first, then proxy to backend
+  - predicate:
+      method: POST
+      path: /wf/trigger-and-forward/$orderId
+      workflows:
+        - type: trigger
+          endpoint: http://audit.example.local/orders
+          method: POST
+          headers:
+            X-Event-Type: "order_created"
+          body:
+            orderId: $orderId
+            source: mockplant
+        - type: forward
+          endpoint: http://orders-backend.local/api/orders/$orderId
+    responses:
+      - response:
+          code: 202
+          content: "Order $orderId accepted (trigger+forward fallback)"
+          content_type: text/plain
+
+  # 5) Multiple forwards – first wins, second is backup (by order)
+  - predicate:
+      method: GET
+      path: /wf/multi-forward/$id
+      workflows:
+        - type: forward
+          endpoint: http://canary-backend.local/users/$id
+        - type: forward
+          endpoint: http://stable-backend.local/users/$id
+    responses:
+      - response:
+          code: 200
+          content: "Multi-forward fallback for user $id"
+          content_type: text/plain
+

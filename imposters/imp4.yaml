@@ -1,0 +1,65 @@
+imposter:
+  name: Orders2
+  type: HTTP
+predicates:
+  # Original rich matching example for /orders2
+  - predicate:
+      method: POST
+      path: /orders2
+    responses:
+      - when:
+          header:
+            Content-Type: application/json
+            X-Request-Source: mobile-app
+          body:
+            status: new
+            priority: high
+        response:
+          code: 201
+          content: "High priority order created from mobile app"
+      - when:
+          header:
+            Content-Type: application/json
+          body:
+            status: new
+            priority: low
+        response:
+          code: 202
+          content: "Low priority order accepted"
+      - when:
+          header:
+            Content-Type: application/xml
+            X-API-Version: "1.0"
+        response:
+          code: 415
+          content: "Unsupported Media Type for this API version"
+      - when:
+          body:
+            status: pending
+            user: guest
+        response:
+          code: 200
+          content: "Pending order from guest user"
+      - response:
+          code: 400
+          content: "Bad request"
+
+  # Example 3: multiple triggers, then local stubbed response (no forward)
+  - predicate:
+      method: POST
+      path: /orders2/$orderId
+      workflows:
+        - type: trigger
+          endpoint: http://webhook.site/abc123
+          method: POST
+          headers:
+            X-Webhook-Source: mockplant
+        - type: trigger
+          endpoint: http://notifications.local/orders/$orderId/settings-changed
+          method: POST
+    responses:
+      - response:
+          code: 200
+          content: "Pending order $orderId updated (mock only)"
+          content_type: text/plain
+

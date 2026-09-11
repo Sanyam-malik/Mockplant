@@ -1,0 +1,47 @@
+imposter:
+  name: Catalog
+  type: HTTP
+predicates:
+  # Original products example
+  - predicate:
+      method: GET
+      path: /products
+    responses:
+      - response:
+          code: 200
+          content: Electronics products list
+          content_type: text/plain
+        when:
+          query:
+            category: electronics
+      - response:
+          code: 200
+          content: Clothing products list
+          content_type: text/plain
+        when:
+          query:
+            category: clothing
+      - response:
+          code: 400
+          content: Invalid category
+          content_type: text/plain
+
+  # Example 4: conditional forward vs static mock for inventory
+  - predicate:
+      method: GET
+      path: /inventory/$sku
+      workflows:
+        - type: forward
+          endpoint: http://inventory-service.local/items/$sku
+    responses:
+      - response:
+          code: 503
+          content: |
+            {
+              "error": "Inventory service unavailable (mock)"
+            }
+          content_type: application/json
+        when:
+          header:
+            X-Mock-Force-Error: "true"
+

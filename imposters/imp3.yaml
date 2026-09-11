@@ -1,0 +1,49 @@
+imposter:
+  name: Orders
+  type: HTTP
+predicates:
+  # Example 2: forward + audit trigger
+  - predicate:
+      method: POST
+      path: /orders
+      workflows:
+        # Notify audit / event bus
+        - type: trigger
+          endpoint: http://audit.local/events
+          method: POST
+          headers:
+            X-Event-Type: order_created
+          body:
+            source: mockplant
+        # Forward the original request to the real backend
+        - type: forward
+          endpoint: http://real-service.local/api/orders
+    responses:
+      - response:
+          code: 201
+          content: Order created successfully
+          content_type: text/plain
+        when:
+          body:
+            status: new
+          header:
+            Content-Type: application/json
+      - response:
+          code: 415
+          content: Unsupported Media Type
+          content_type: text/plain
+        when:
+          header:
+            Content-Type: application/xml
+      - response:
+          code: 200
+          content: Order is in pending state
+          content_type: text/plain
+        when:
+          body:
+            status: pending
+      - response:
+          code: 400
+          content: Bad request
+          content_type: text/plain
+

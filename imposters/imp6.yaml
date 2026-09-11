@@ -1,0 +1,147 @@
+imposter:
+  name: ContentTypeTest
+  description: Test imposter for various content types and request/response handling
+  type: HTTP
+predicates:
+  - predicate:
+      method: GET
+      path: /page
+    responses:
+      - response:
+          code: 200
+          content: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Test Page</title>
+              <link rel="stylesheet" href="/styles.css">
+              <script src="/script.js"></script>
+            </head>
+            <body>
+              <h1>Hello $name!</h1>
+              <p>This is a test page for content types.</p>
+            </body>
+            </html>
+          content_type: text/html
+          headers:
+            Cache-Control: no-cache
+        when:
+          query:
+            format: html
+  - predicate:
+      method: GET
+      path: /styles.css
+    responses:
+      - response:
+          code: 200
+          content: |
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              background-color: #f0f0f0;
+            }
+            h1 {
+              color: #333;
+              border-bottom: 2px solid #666;
+            }
+          content_type: text/css
+          headers:
+            Cache-Control: max-age=3600
+  - predicate:
+      method: GET
+      path: /script.js
+    responses:
+      - response:
+          code: 200
+          content: |
+            console.log('Script loaded');
+            function greet(name) {
+              console.log('Hello ' + name + '!');
+            }
+            greet('$name');
+          content_type: application/javascript
+  - predicate:
+      method: GET
+      path: /data
+    responses:
+      - response:
+          code: 200
+          content: |
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root>
+              <user>
+                <id>$id</id>
+                <name>$name</name>
+                <email>$email</email>
+              </user>
+            </root>
+          content_type: application/xml
+        when:
+          query:
+            format: xml
+  - predicate:
+      method: POST
+      path: /upload
+    responses:
+      - response:
+          code: 200
+          content: |
+            {
+              "status": "success",
+              "message": "$file_name uploaded successfully",
+            }
+          content_type: application/json
+        when:
+          header:
+            Content-Type: multipart/form-data
+  - predicate:
+      method: GET
+      path: /text
+    responses:
+      - response:
+          code: 200
+          content: |
+            This is a plain text response.
+            It can contain multiple lines.
+            Current user: $name
+          content_type: text/plain
+  - predicate:
+      method: GET
+      path: /binary
+    responses:
+      - response:
+          code: 200
+          content: Hello World
+          content_type: application/octet-stream
+          headers:
+            Content-Disposition: attachment; filename="test.txt"
+  - predicate:
+      method: GET
+      path: /error
+    responses:
+      - response:
+          code: 400
+          content: |
+            <error>
+              <code>400</code>
+              <message>Bad Request</message>
+              <details>Invalid parameter: $param</details>
+            </error>
+          content_type: application/xml
+        when:
+          query:
+            format: xml
+      - response:
+          code: 400
+          content: |
+            {
+              "error": {
+                "code": 400,
+                "message": "Bad Request",
+                "details": "Invalid parameter: $param"
+              }
+            }
+          content_type: application/json
+        when:
+          query:
+            format: json

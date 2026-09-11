@@ -1,0 +1,26 @@
+imposter:
+  name: Users2
+  type: HTTP
+predicates:
+  - predicate:
+      method: GET
+      path: /users2/$id
+    responses:
+      - response:
+          code: 200
+          content: Hello user with $id
+          content_type: text/plain
+        when:
+          path:
+            id: 456
+  - predicate:
+      method: GET
+      path: /users2/$id/$user
+    responses:
+      - response:
+          code: 200
+          content: Hello $user with $id
+          content_type: text/plain
+        when:
+          path:
+            id: 456

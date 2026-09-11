@@ -1,0 +1,49 @@
+imposter:
+  name: Users
+  description: APIs for having operations on users
+  type: HTTP
+predicates:
+  # Example 1: simple forward (full proxy of original request)
+  - predicate:
+      method: GET
+      path: /users/$id
+      delay: 1ms
+      workflows:
+        - type: forward
+          endpoint: http://localhost:9000/users/$id
+          headers:
+            X-From-Mockplant: "true"
+    responses:
+      - response:
+          code: 200
+          content: Hello $id
+          content_type: text/plain
+
+  # Keep original simple CRUD examples
+  - predicate:
+      method: PUT
+      path: /users/$id
+    responses:
+      - response:
+          code: 200
+          content: Update success
+          content_type: text/plain
+
+  - predicate:
+      method: DELETE
+      path: /users/$id
+    responses:
+      - response:
+          code: 200
+          content: Delete success
+          content_type: text/plain
+
+  - predicate:
+      method: POST
+      path: /users/$id
+    responses:
+      - response:
+          code: 200
+          content: Add success
+          content_type: text/plain
+

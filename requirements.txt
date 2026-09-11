@@ -1,0 +1,9 @@
+Flask
+requests
+python-dotenv
+pyyaml
+Flask-Cors
+waitress
+gunicorn
+uvicorn
+asgiref
